@@ -515,6 +515,28 @@ define(['build', 'env!env/file', 'env'], function (build, file, env) {
             ]
         );
         doh.run();
+        
+        //generateSourceMaps:true and preserveLicenseComments:true
+        doh.register("preserveLicenseWithSourceMaps",
+            [
+                function preserveLicenseWithSourceMaps(t) {
+                    file.deleteFile("lib/comments/withSourceMaps/built.js");
+                    file.deleteFile("lib/comments/withSourceMaps/built.js.map");
+
+                    build(["lib/comments/withSourceMaps/build.js"]);
+
+                    t.is(nol(c("lib/comments/withSourceMaps/expected.js")),
+                         nol(c("lib/comments/withSourceMaps/built.js")));
+
+                    t.is(noSlashRn(nol(c("lib/comments/withSourceMaps/expected.js.map"))),
+                         noSlashRn(nol(c("lib/comments/withSourceMaps/built.js.map"))));
+
+                    require._buildReset();
+                }
+
+            ]
+        );
+        doh.run();
     }
 
 
