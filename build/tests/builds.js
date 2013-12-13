@@ -1942,8 +1942,8 @@ define(['build', 'env!env/file', 'env'], function (build, file, env) {
 
                 build(["lib/sourcemap/build.js"]);
 
-                t.is(nol(c("lib/sourcemap/expected-main.js.map")),
-                     nol(c("lib/sourcemap/www-built/js/main.js.map")));
+                t.is(noSlashRn(nol(c("lib/sourcemap/expected-main.js.map"))),
+                     noSlashRn(nol(c("lib/sourcemap/www-built/js/main.js.map"))));
 
                 require._buildReset();
             }
@@ -1961,8 +1961,8 @@ define(['build', 'env!env/file', 'env'], function (build, file, env) {
 
                 build(["lib/sourcemapSingle/build.js"]);
 
-                t.is(nol(c("lib/sourcemapSingle/expected-main-built.js.map")),
-                     nol(c("lib/sourcemapSingle/main-built.js.map")));
+                t.is(noSlashRn(nol(c("lib/sourcemapSingle/expected-main-built.js.map"))),
+                     noSlashRn(nol(c("lib/sourcemapSingle/main-built.js.map"))));
 
                 require._buildReset();
             }
@@ -1982,8 +1982,8 @@ define(['build', 'env!env/file', 'env'], function (build, file, env) {
 
                 build(["lib/sourcemap/onejs/build.js"]);
 
-                t.is(nol(c("lib/sourcemap/onejs/expected.map")),
-                     nol(c("lib/sourcemap/onejs/built.js.map")));
+                t.is(noSlashRn(nol(c("lib/sourcemap/onejs/expected.map"))),
+                     noSlashRn(nol(c("lib/sourcemap/onejs/built.js.map"))));
 
                 require._buildReset();
             }
