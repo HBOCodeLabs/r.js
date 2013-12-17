@@ -251,11 +251,12 @@ function (lang,   logger,   envOptimize,        file,           parse,
                         }
                     }
 
-                    fileContents = licenseContents + optFunc(fileName,
-                                                             fileContents,
-                                                             outFileName,
-                                                             keepLines,
-                                                             optConfig);
+                    fileContents = optFunc(fileName,
+                                           fileContents,
+                                           licenseContents,
+                                           outFileName,
+                                           keepLines,
+                                           optConfig);
                 } catch (e) {
                     if (config.throwWhen && config.throwWhen.optimize) {
                         throw e;
@@ -385,7 +386,7 @@ function (lang,   logger,   envOptimize,        file,           parse,
         },
 
         optimizers: {
-            uglify: function (fileName, fileContents, outFileName, keepLines, config) {
+            uglify: function (fileName, fileContents, licenseComments, outFileName, keepLines, config) {
                 var parser = uglify.parser,
                     processor = uglify.uglify,
                     ast, errMessage, errMatch;
@@ -417,10 +418,10 @@ function (lang,   logger,   envOptimize,        file,           parse,
                     }
                     throw new Error('Cannot uglify file: ' + fileName + '. Skipping it. Error is:\n' + errMessage);
                 }
-                return fileContents;
+                return licenseComments + fileContents;
             },
-            uglify2: function (fileName, fileContents, outFileName, keepLines, config) {
-                var result, existingMap, resultMap, finalMap, sourceIndex,
+            uglify2: function (fileName, fileContents, licenseComments, outFileName, keepLines, config) {
+                var result, existingMap, resultMap, finalMap, offsetMap, lineOffset,
                     uconfig = {},
                     existingMapPath = outFileName + '.map',
                     baseName = fileName && fileName.split('/').pop();
@@ -447,10 +448,27 @@ function (lang,   logger,   envOptimize,        file,           parse,
                     result = uglify2.minify(fileContents, uconfig, baseName + '.src.js');
                     if (uconfig.outSourceMap && result.map) {
                         resultMap = result.map;
-                        if (existingMap) {
+                        if (existingMap || licenseComments !== '') {
                             resultMap = JSON.parse(resultMap);
                             finalMap = SourceMapGenerator.fromSourceMap(new SourceMapConsumer(resultMap));
-                            finalMap.applySourceMap(new SourceMapConsumer(existingMap));
+                            if (existingMap) {
+                                finalMap.applySourceMap(new SourceMapConsumer(existingMap));
+                            }
+                            if (licenseComments !== '') {
+                                resultMap = finalMap.toJSON();
+                                offsetMap = new SourceMapConsumer(resultMap);
+                                resultMap.mappings = [];
+                                finalMap = SourceMapGenerator.fromSourceMap(new SourceMapConsumer(resultMap));
+                                lineOffset = licenseComments.split(/\n/).length - 1;
+                                offsetMap.eachMapping(function (mapping) {
+                                    finalMap.addMapping({
+                                        generated: { line: mapping.generatedLine + lineOffset, column: mapping.generatedColumn },
+                                        original: { line: mapping.originalLine, column: mapping.originalColumn },
+                                        source: mapping.source,
+                                        name: mapping.name
+                                    });
+                                });
+                            }
                             resultMap = finalMap.toString();
                         } else {
                             file.saveFile(outFileName + '.src.js', fileContents);
@@ -463,7 +481,7 @@ function (lang,   logger,   envOptimize,        file,           parse,
                 } catch (e) {
                     throw new Error('Cannot uglify2 file: ' + fileName + '. Skipping it. Error is:\n' + e.toString());
                 }
-                return fileContents;
+                return licenseComments + fileContents;
             }
         }
     };

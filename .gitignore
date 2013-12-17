@@ -9,6 +9,8 @@ build/tests/lib/appDirSrcOverwrite/www-built
 build/tests/lib/cjsTranslate/www-built
 build/tests/lib/comments/built.js
 build/tests/lib/comments/noPartialDupe/built
+build/tests/lib/comments/withSourceMaps/built.js
+build/tests/lib/comments/withSourceMaps/built.js.map
 build/tests/lib/comments/unique/built.js
 build/tests/lib/configPackageShim/built
 build/tests/lib/cssComment138/main-built.css
@@ -25,6 +27,7 @@ build/tests/lib/dotpackage/built
 build/tests/lib/dualLayerOverride/built
 build/tests/lib/empty/built
 build/tests/lib/hasOwnProperty/built.js
+build/tests/lib/js18/main-built.js
 build/tests/lib/iife/main-built.js
 build/tests/lib/insertRequire/main-built.js
 build/tests/lib/intDefine/main-built.js
@@ -55,6 +58,7 @@ build/tests/lib/onBuildRead/main-built.js
 build/tests/lib/onBuildWrite/main-built.js
 build/tests/lib/override/wrap/built
 build/tests/lib/packages/main-built.js
+build/tests/lib/packages/named/main-built.js
 build/tests/lib/pathsNoCopy/js-built
 build/tests/lib/pluginBuilder/main-built.js
 build/tests/lib/pluginShimDep/main-built.js
@@ -77,6 +81,8 @@ build/tests/lib/shimFakeDefine/main-built.js
 build/tests/lib/sourcemap/www-built
 build/tests/lib/sourcemap/onejs/built.js
 build/tests/lib/sourcemap/onejs/built.js.map
+build/tests/lib/sourcemapSingle/main-built.js
+build/tests/lib/sourcemapSingle/main-built.js.map
 build/tests/lib/stubModules/create/foobar-built.js
 build/tests/lib/stubModules/main-built.js
 build/tests/lib/stubModules/perModule/built
