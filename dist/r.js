@@ -1,5 +1,5 @@
 /**
- * @license r.js 2.1.9+ Mon, 18 Nov 2013 20:28:43 GMT Copyright (c) 2010-2013, The Dojo Foundation All Rights Reserved.
+ * @license r.js 2.1.9+ Copyright (c) 2010-2013, The Dojo Foundation All Rights Reserved.
  * Available via the MIT or new BSD license.
  * see: http://github.com/jrburke/requirejs for details
  */
@@ -20,7 +20,7 @@ var requirejs, require, define, xpcUtil;
 (function (console, args, readFileFunc) {
     var fileName, env, fs, vm, path, exec, rhinoContext, dir, nodeRequire,
         nodeDefine, exists, reqMain, loadedOptimizedLib, existsForNode, Cc, Ci,
-        version = '2.1.9+ Mon, 18 Nov 2013 20:28:43 GMT',
+        version = '2.1.9+',
         jsSuffixRegExp = /\.js$/,
         commandOption = '',
         useLibLoaded = {},
@@ -22026,7 +22026,7 @@ define('parse', ['./esprimaAdapter', 'lang'], function (esprima, lang) {
                         for (j = i + 1; j < ast.comments.length; j++) {
                             subNode = ast.comments[j];
                             if (subNode.type === 'Line' &&
-                                    subNode.range[0] === refNode.range[1] + 1) {
+                                    subNode.range[0] === refNode.range[1] + lineEnd.length) {
                                 //Adjacent single line comment. Collect it.
                                 value += '//' + subNode.value + lineEnd;
                                 refNode = subNode;
@@ -23201,11 +23201,12 @@ function (lang,   logger,   envOptimize,        file,           parse,
                         }
                     }
 
-                    fileContents = licenseContents + optFunc(fileName,
-                                                             fileContents,
-                                                             outFileName,
-                                                             keepLines,
-                                                             optConfig);
+                    fileContents = optFunc(fileName,
+                                           fileContents,
+                                           licenseContents,
+                                           outFileName,
+                                           keepLines,
+                                           optConfig);
                 } catch (e) {
                     if (config.throwWhen && config.throwWhen.optimize) {
                         throw e;
@@ -23335,7 +23336,7 @@ function (lang,   logger,   envOptimize,        file,           parse,
         },
 
         optimizers: {
-            uglify: function (fileName, fileContents, outFileName, keepLines, config) {
+            uglify: function (fileName, fileContents, licenseComments, outFileName, keepLines, config) {
                 var parser = uglify.parser,
                     processor = uglify.uglify,
                     ast, errMessage, errMatch;
@@ -23367,10 +23368,10 @@ function (lang,   logger,   envOptimize,        file,           parse,
                     }
                     throw new Error('Cannot uglify file: ' + fileName + '. Skipping it. Error is:\n' + errMessage);
                 }
-                return fileContents;
+                return licenseComments + fileContents;
             },
-            uglify2: function (fileName, fileContents, outFileName, keepLines, config) {
-                var result, existingMap, resultMap, finalMap, sourceIndex,
+            uglify2: function (fileName, fileContents, licenseComments, outFileName, keepLines, config) {
+                var result, existingMap, resultMap, finalMap, offsetMap, lineOffset,
                     uconfig = {},
                     existingMapPath = outFileName + '.map',
                     baseName = fileName && fileName.split('/').pop();
@@ -23397,10 +23398,27 @@ function (lang,   logger,   envOptimize,        file,           parse,
                     result = uglify2.minify(fileContents, uconfig, baseName + '.src.js');
                     if (uconfig.outSourceMap && result.map) {
                         resultMap = result.map;
-                        if (existingMap) {
+                        if (existingMap || licenseComments !== '') {
                             resultMap = JSON.parse(resultMap);
                             finalMap = SourceMapGenerator.fromSourceMap(new SourceMapConsumer(resultMap));
-                            finalMap.applySourceMap(new SourceMapConsumer(existingMap));
+                            if (existingMap) {
+                                finalMap.applySourceMap(new SourceMapConsumer(existingMap));
+                            }
+                            if (licenseComments !== '') {
+                                resultMap = finalMap.toJSON();
+                                offsetMap = new SourceMapConsumer(resultMap);
+                                resultMap.mappings = [];
+                                finalMap = SourceMapGenerator.fromSourceMap(new SourceMapConsumer(resultMap));
+                                lineOffset = licenseComments.split(/\n/).length - 1;
+                                offsetMap.eachMapping(function (mapping) {
+                                    finalMap.addMapping({
+                                        generated: { line: mapping.generatedLine + lineOffset, column: mapping.generatedColumn },
+                                        original: { line: mapping.originalLine, column: mapping.originalColumn },
+                                        source: mapping.source,
+                                        name: mapping.name
+                                    });
+                                });
+                            }
                             resultMap = finalMap.toString();
                         } else {
                             file.saveFile(outFileName + '.src.js', fileContents);
@@ -23413,7 +23431,7 @@ function (lang,   logger,   envOptimize,        file,           parse,
                 } catch (e) {
                     throw new Error('Cannot uglify2 file: ' + fileName + '. Skipping it. Error is:\n' + e.toString());
                 }
-                return fileContents;
+                return licenseComments + fileContents;
             }
         }
     };
@@ -24015,6 +24033,7 @@ define('build', function (require) {
         logger = require('logger'),
         file = require('env!env/file'),
         parse = require('parse'),
+        esprima = require('esprimaAdapter'),
         optimize = require('optimize'),
         pragma = require('pragma'),
         transform = require('transform'),
@@ -25166,12 +25185,14 @@ define('build', function (require) {
         }
 
         if (config.generateSourceMaps) {
-            if (config.preserveLicenseComments && config.optimize !== 'none') {
-                throw new Error('Cannot use preserveLicenseComments and ' +
-                    'generateSourceMaps together. Either explcitly set ' +
-                    'preserveLicenseComments to false (default is true) or ' +
-                    'turn off generateSourceMaps. If you want source maps with ' +
-                    'license comments, see: ' +
+            if (config.preserveLicenseComments && config.optimize !== 'none' &&
+                    config.optimize !== 'uglify2') {
+                throw new Error('preserveLicenseComments and ' +
+                    'generateSourceMaps can only be used together with ' +
+                    'optimize=none or optimize=uglify2. Either explicitly set ' +
+                    'preserveLicenseComments to false (default is true), ' +
+                    'turn off generateSourceMaps, or set optimize to none or ' +
+                    'uglify2. If you want source maps with license comments, see: ' +
                     'http://requirejs.org/docs/errors.html#sourcemapcomments');
             } else if (config.optimize !== 'none' &&
                        config.optimize !== 'closure' &&
@@ -25616,7 +25637,7 @@ define('build', function (require) {
             }
 
             //Write the built module to disk, and build up the build output.
-            fileContents = "";
+            fileContents = config.wrap ? config.wrap.start : "";
             return prim.serial(layer.buildFilePaths.map(function (path) {
                 return function () {
                     var lineCount,
@@ -25717,7 +25738,10 @@ define('build', function (require) {
 
                                 //Semicolon is for files that are not well formed when
                                 //concatenated with other content.
-                                singleContents += "\n" + addSemiColon(currContents, config);
+                                if (singleContents !== "") {
+                                    singleContents += "\n";
+                                }
+                                singleContents += addSemiColon(currContents, config);
                             });
                         }
                     }).then(function () {
@@ -25768,20 +25792,35 @@ define('build', function (require) {
                             }
 
                             sourceMapLineNumber = fileContents.split('\n').length - 1;
-                            lineCount = singleContents.split('\n').length;
-                            for (var i = 1; i <= lineCount; i += 1) {
-                                sourceMapGenerator.addMapping({
-                                    generated: {
-                                        line: sourceMapLineNumber + i,
-                                        column: 0
-                                    },
-                                    original: {
-                                        line: i,
-                                        column: 0
-                                    },
-                                    source: sourceMapPath
-                                });
-                            }
+
+                            //Produce source maps for the flattened module based on
+                            //JavaScript syntax elements.  This enables stepping
+                            //through multiple statements per line, and is also
+                            //necessary to pacify the Visual Studio debugger.
+                            parse.traverse(esprima.parse(singleContents, { loc: true }), function (node) {
+                                if (node.loc) {
+                                    var addFlattenedModuleSourceMappings = function (loc) {
+                                        sourceMapGenerator.addMapping({
+                                            generated: {
+                                                line: sourceMapLineNumber + loc.line,
+                                                column: loc.column
+                                            },
+                                            original: {
+                                                line: loc.line,
+                                                column: loc.column
+                                            },
+                                            source: sourceMapPath
+                                        });
+                                    }
+
+                                    if (node.loc.start) {
+                                        addFlattenedModuleSourceMappings(node.loc.start);
+                                    }
+                                    if (node.loc.end) {
+                                        addFlattenedModuleSourceMappings(node.loc.end);
+                                    }
+                                }
+                            });
 
                             //Store the content of the original in the source
                             //map since other transforms later like minification
@@ -25829,9 +25868,7 @@ define('build', function (require) {
             });
         }).then(function () {
             return {
-                text: config.wrap ?
-                        config.wrap.start + fileContents + config.wrap.end :
-                        fileContents,
+                text: config.wrap ? fileContents + wrap.end : fileContents,
                 buildText: buildFileContents,
                 sourceMap: sourceMapGenerator ?
                               JSON.stringify(sourceMapGenerator.toJSON(), null, '  ') :
