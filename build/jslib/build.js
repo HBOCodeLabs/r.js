@@ -1852,7 +1852,7 @@ define(function (require) {
             });
         }).then(function () {
             return {
-                text: config.wrap ? fileContents + wrap.end : fileContents,
+                text: config.wrap ? fileContents + config.wrap.end : fileContents,
                 buildText: buildFileContents,
                 sourceMap: sourceMapGenerator ?
                               JSON.stringify(sourceMapGenerator.toJSON(), null, '  ') :
