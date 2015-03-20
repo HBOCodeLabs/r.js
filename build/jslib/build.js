@@ -1574,6 +1574,8 @@ define(function (require) {
             sourceMapBase,
             buildFileContents = '';
 
+        var wrapStartText = config.wrap ? config.wrap.start + "\n" : "";
+
         return prim().start(function () {
             var reqIndex, currContents,
                 moduleName, shim, packageConfig, nonPackageName,
@@ -1621,7 +1623,7 @@ define(function (require) {
             }
 
             //Write the built module to disk, and build up the build output.
-            fileContents = "";
+            fileContents = wrapStartText;
             return prim.serial(layer.buildFilePaths.map(function (path) {
                 return function () {
                     var lineCount,
@@ -1776,7 +1778,7 @@ define(function (require) {
                             }
 
                             sourceMapLineNumber = fileContents.split('\n').length - 1;
-                            
+
                             //Produce source maps for the flattened module based on
                             //JavaScript syntax elements.  This enables stepping
                             //through multiple statements per line, and is also
@@ -1852,9 +1854,7 @@ define(function (require) {
             });
         }).then(function () {
             return {
-                text: config.wrap ?
-                        config.wrap.start + fileContents + config.wrap.end :
-                        fileContents,
+                text: config.wrap ? fileContents + config.wrap.end : fileContents,
                 buildText: buildFileContents,
                 sourceMap: sourceMapGenerator ?
                               JSON.stringify(sourceMapGenerator.toJSON(), null, '  ') :
