@@ -1574,6 +1574,8 @@ define(function (require) {
             sourceMapBase,
             buildFileContents = '';
 
+        var wrapStartText = config.wrap ? config.wrap.start + "\n" : "";
+
         return prim().start(function () {
             var reqIndex, currContents,
                 moduleName, shim, packageConfig, nonPackageName,
@@ -1621,7 +1623,7 @@ define(function (require) {
             }
 
             //Write the built module to disk, and build up the build output.
-            fileContents = config.wrap ? config.wrap.start : "";
+            fileContents = wrapStartText;
             return prim.serial(layer.buildFilePaths.map(function (path) {
                 return function () {
                     var lineCount,
