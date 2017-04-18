@@ -1,4 +1,0 @@
-# This file is loaded using "require", which will encode the file contents as
-# a string and escape line endings.  This file MUST have LF endings so that
-# source maps have predictable column offsets.
-build/tests/lib/sourcemap/onejs/www/js/app/sample.txt text eol=lf
