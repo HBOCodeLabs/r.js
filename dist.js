@@ -1,9 +1,3 @@
-/**
- * @license Copyright (c) 2010-2013, The Dojo Foundation All Rights Reserved.
- * Available via the MIT or new BSD license.
- * see: http://github.com/jrburke/requirejs for details
- */
-
 /*
  * This script will create the final r.js file used in node projects to use
  * RequireJS.
@@ -43,21 +37,8 @@ var fs = require('fs'),
         'build/jslib/blank.js',
         'build/jslib/esprima.js',
         'build/jslib/esprimaAdapter.js',
-        'build/jslib/uglifyjs/consolidator.js',
-        'build/jslib/uglifyjs/parse-js.js',
-        'build/jslib/uglifyjs/squeeze-more.js',
-        'build/jslib/uglifyjs/process.js',
-        'build/jslib/uglifyjs/index.js',
-        'build/jslib/source-map/array-set.js',
-        'build/jslib/source-map/base64-vlq.js',
-        'build/jslib/source-map/base64.js',
-        'build/jslib/source-map/binary-search.js',
-        'build/jslib/source-map/source-map-consumer.js',
-        'build/jslib/source-map/source-map-generator.js',
-        'build/jslib/source-map/source-node.js',
-        'build/jslib/source-map/util.js',
         'build/jslib/source-map.js',
-        'build/jslib/uglifyjs2.js',
+        'build/jslib/uglifyjs.js',
         'build/jslib/parse.js',
         'build/jslib/transform.js',
         'build/jslib/pragma.js',

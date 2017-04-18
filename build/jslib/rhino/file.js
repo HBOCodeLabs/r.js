@@ -1,8 +1,3 @@
-/**
- * @license RequireJS Copyright (c) 2010-2013, The Dojo Foundation All Rights Reserved.
- * Available via the MIT or new BSD license.
- * see: http://github.com/jrburke/requirejs for details
- */
 //Helper functions to deal with file I/O.
 
 /*jslint plusplus: false */
@@ -98,7 +93,11 @@ define(['prim'], function (prim) {
                     } else if (fileObj.isDirectory() &&
                               (!file.exclusionRegExp || !file.exclusionRegExp.test(fileObj.getName()))) {
                         dirFiles = this.getFilteredFileList(fileObj, regExpFilters, makeUnixPaths, true);
-                        files.push.apply(files, dirFiles);
+                        //Do not use push.apply for dir listings, can hit limit of max number
+                        //of arguments to a function call, #921.
+                        dirFiles.forEach(function (dirFile) {
+                            files.push(dirFile);
+                        });
                     }
                 }
             }
@@ -236,7 +235,13 @@ define(['prim'], function (prim) {
 
             os = new java.io.BufferedWriter(outWriter);
             try {
-                os.write(fileContents);
+                //If in Nashorn, need to coerce the JS string to a Java string so that
+                //writer.write method dispatch correctly detects the type.
+                if (typeof importPackage !== 'undefined') {
+                    os.write(fileContents);
+                } else {
+                    os.write(new java.lang.String(fileContents));
+                }
             } finally {
                 os.close();
             }

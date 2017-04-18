@@ -1,9 +1,3 @@
-/**
- * @license Copyright (c) 2010-2013, The Dojo Foundation All Rights Reserved.
- * Available via the MIT or new BSD license.
- * see: http://github.com/jrburke/requirejs for details
- */
-
 /*jslint plusplus: false, octal:false, strict: false */
 /*global define: false, process: false */
 
@@ -134,7 +128,11 @@ define(['fs', 'path', 'prim'], function (fs, path, prim) {
                     } else if (stat.isDirectory() &&
                               (!file.exclusionRegExp || !file.exclusionRegExp.test(fileName))) {
                         dirFiles = this.getFilteredFileList(filePath, regExpFilters, makeUnixPaths);
-                        files.push.apply(files, dirFiles);
+                        //Do not use push.apply for dir listings, can hit limit of max number
+                        //of arguments to a function call, #921.
+                        dirFiles.forEach(function (dirFile) {
+                            files.push(dirFile);
+                        });
                     }
                 }
             }
@@ -262,7 +260,7 @@ define(['fs', 'path', 'prim'], function (fs, path, prim) {
             //summary: deletes a file or directory if it exists.
             var files, i, stat;
             if (file.exists(fileName)) {
-                stat = fs.statSync(fileName);
+                stat = fs.lstatSync(fileName);
                 if (stat.isDirectory()) {
                     files = fs.readdirSync(fileName);
                     for (i = 0; i < files.length; i++) {
@@ -287,7 +285,7 @@ define(['fs', 'path', 'prim'], function (fs, path, prim) {
                 for (i = 0; i < dirFileArray.length; i++) {
                     fileName = dirFileArray[i];
                     filePath = path.join(startDir, fileName);
-                    stat = fs.statSync(filePath);
+                    stat = fs.lstatSync(filePath);
                     if (stat.isDirectory()) {
                         file.deleteEmptyDirs(filePath);
                     }

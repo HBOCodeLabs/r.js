@@ -1,10 +1,7 @@
-/**
- * @license RequireJS node Copyright (c) 2010-2013, The Dojo Foundation All Rights Reserved.
- * Available via the MIT or new BSD license.
- * see: http://github.com/jrburke/requirejs for details
- */
-
-/*jslint regexp: false */
+//Explicity not strict since this file contains an eval call, and do not want
+//to enforce strict on code evaluated that way. See
+//https://github.com/requirejs/r.js/issues/774
+/*jslint regexp: false, sloppy: true*/
 /*global require: false, define: false, requirejsVars: false, process: false */
 
 /**
@@ -15,8 +12,6 @@
  */
 
 (function () {
-    'use strict';
-
     var nodeReq = requirejsVars.nodeRequire,
         req = requirejsVars.require,
         def = requirejsVars.define,
@@ -81,7 +76,7 @@
 
                     //Break any cycles by requiring it normally, but this will
                     //finish synchronously
-                    require([moduleName]);
+                    context.require([moduleName]);
 
                     //The above calls are sync, so can do the next thing safely.
                     ret = context.defined[moduleName];
@@ -159,7 +154,7 @@
                     err.originalError = e;
                     err.moduleName = originalName;
                     err.requireModules = [moduleName];
-                    return context.onError(err);
+                    throw err;
                 }
             });
         }

@@ -1,8 +1,3 @@
-/**
- * @license RequireJS Copyright (c) 2013, The Dojo Foundation All Rights Reserved.
- * Available via the MIT or new BSD license.
- * see: http://github.com/jrburke/requirejs for details
- */
 //Helper functions to deal with file I/O.
 
 /*jslint plusplus: false */
@@ -110,7 +105,11 @@ define(['prim'], function (prim) {
                     } else if (fileObj.isDirectory() &&
                               (!file.exclusionRegExp || !file.exclusionRegExp.test(fileObj.leafName))) {
                         dirFiles = this.getFilteredFileList(fileObj, regExpFilters, makeUnixPaths, true);
-                        files.push.apply(files, dirFiles);
+                        //Do not use push.apply for dir listings, can hit limit of max number
+                        //of arguments to a function call, #921.
+                        dirFiles.forEach(function (dirFile) {
+                            files.push(dirFile);
+                        });
                     }
                 }
             }
