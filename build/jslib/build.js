@@ -17,7 +17,6 @@ define(function (require) {
         logger = require('logger'),
         file = require('env!env/file'),
         parse = require('parse'),
-        esprima = require('esprimaAdapter'),
         optimize = require('optimize'),
         pragma = require('pragma'),
         transform = require('transform'),
@@ -1169,14 +1168,12 @@ define(function (require) {
         }
 
         if (config.generateSourceMaps) {
-            if (config.preserveLicenseComments && config.optimize !== 'none' &&
-                    config.optimize !== 'uglify2') {
-                throw new Error('preserveLicenseComments and ' +
-                    'generateSourceMaps can only be used together with ' +
-                    'optimize=none or optimize=uglify2. Either explicitly set ' +
-                    'preserveLicenseComments to false (default is true), ' +
-                    'turn off generateSourceMaps, or set optimize to none or ' +
-                    'uglify2. If you want source maps with license comments, see: ' +
+            if (config.preserveLicenseComments && config.optimize !== 'none') {
+                throw new Error('Cannot use preserveLicenseComments and ' +
+                    'generateSourceMaps together. Either explcitly set ' +
+                    'preserveLicenseComments to false (default is true) or ' +
+                    'turn off generateSourceMaps. If you want source maps with ' +
+                    'license comments, see: ' +
                     'http://requirejs.org/docs/errors.html#sourcemapcomments');
             } else if (config.optimize !== 'none' &&
                        config.optimize !== 'closure' &&
@@ -1722,10 +1719,7 @@ define(function (require) {
 
                                 //Semicolon is for files that are not well formed when
                                 //concatenated with other content.
-                                if (singleContents !== "") {
-                                    singleContents += "\n";
-                                }
-                                singleContents += addSemiColon(currContents, config);
+                                singleContents += "\n" + addSemiColon(currContents, config);
                             });
                         }
                     }).then(function () {
@@ -1776,35 +1770,20 @@ define(function (require) {
                             }
 
                             sourceMapLineNumber = fileContents.split('\n').length - 1;
-                            
-                            //Produce source maps for the flattened module based on
-                            //JavaScript syntax elements.  This enables stepping
-                            //through multiple statements per line, and is also
-                            //necessary to pacify the Visual Studio debugger.
-                            parse.traverse(esprima.parse(singleContents, { loc: true }), function (node) {
-                                if (node.loc) {
-                                    var addFlattenedModuleSourceMappings = function (loc) {
-                                        sourceMapGenerator.addMapping({
-                                            generated: {
-                                                line: sourceMapLineNumber + loc.line,
-                                                column: loc.column
-                                            },
-                                            original: {
-                                                line: loc.line,
-                                                column: loc.column
-                                            },
-                                            source: sourceMapPath
-                                        });
-                                    }
-
-                                    if (node.loc.start) {
-                                        addFlattenedModuleSourceMappings(node.loc.start);
-                                    }
-                                    if (node.loc.end) {
-                                        addFlattenedModuleSourceMappings(node.loc.end);
-                                    }
-                                }
-                            });
+                            lineCount = singleContents.split('\n').length;
+                            for (var i = 1; i <= lineCount; i += 1) {
+                                sourceMapGenerator.addMapping({
+                                    generated: {
+                                        line: sourceMapLineNumber + i,
+                                        column: 0
+                                    },
+                                    original: {
+                                        line: i,
+                                        column: 0
+                                    },
+                                    source: sourceMapPath
+                                });
+                            }
 
                             //Store the content of the original in the source
                             //map since other transforms later like minification
